@@ -24,7 +24,7 @@ public class ClientHandler {
 
             new Thread(() -> {
                 try {
-//                    socket.setSoTimeout(0);
+///                    socket.setSoTimeout(0);
                     //цикл аутентификации
                     while (true) {
                         String str = in.readUTF();
