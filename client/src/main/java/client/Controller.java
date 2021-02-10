@@ -1,9 +1,9 @@
 package client;
 
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import commands.Command;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -18,11 +18,8 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.stage.WindowEvent;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -56,6 +53,9 @@ public class Controller implements Initializable {
     private Stage regStage;
     private RegController regController;
 
+    PrintWriter logfile;
+    private static final String newLine = System.getProperty("line.separator");
+
     public void setAuthenticated(boolean authenticated) {
         this.authenticated = authenticated;
         msgPanel.setVisible(authenticated);
@@ -67,7 +67,7 @@ public class Controller implements Initializable {
         if (!authenticated) {
             nickname = "";
         }
-        setTitle(nickname);
+        nickActions(nickname);
         textArea.clear();
     }
 
@@ -148,11 +148,14 @@ public class Controller implements Initializable {
                             //==============//
                             if (str.startsWith("/yournickis ")) {
                                 nickname = str.split(" ")[1];
-                                setTitle(nickname);
+                                logfile.close();
+                                nickActions(nickname);
                             }
                             //==============//
                         } else {
                             textArea.appendText(str + "\n");
+                            logfile.write(newLine + str);
+
                         }
                     }
                 } catch (RuntimeException e) {
@@ -161,6 +164,8 @@ public class Controller implements Initializable {
                     e.printStackTrace();
                 } finally {
                     setAuthenticated(false);
+                    logfile.flush();
+                    logfile.close();
                     try {
                         socket.close();
                     } catch (IOException e) {
@@ -252,6 +257,17 @@ public class Controller implements Initializable {
             out.writeUTF(msg);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void nickActions(String nickname) {
+        setTitle(nickname);
+        if (!nickname.equals("")) {
+            try {
+                logfile = new PrintWriter(new FileWriter("history_" + nickname + ".txt", true));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
