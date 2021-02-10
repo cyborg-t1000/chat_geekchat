@@ -17,8 +17,13 @@ public class Server {
 
     public Server() {
         clients = new CopyOnWriteArrayList<>();
-        authService = new SimpleAuthService();
-
+//        authService = new SimpleAuthService();
+        //==============//
+        if (!SQLHandler.connect()) {
+            throw new RuntimeException("Не удалось подключиться к БД");
+        }
+        authService = new DBAuthService();
+        //==============//
         try {
             server = new ServerSocket(PORT);
             System.out.println("Server started");
@@ -32,6 +37,7 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            SQLHandler.disconnect();
             try {
                 server.close();
             } catch (IOException e) {
@@ -42,6 +48,11 @@ public class Server {
 
     public void broadcastMsg(ClientHandler clientHandler, String msg) {
         String message = String.format("[ %s ]: %s", clientHandler.getNickname(), msg);
+
+        //==============//
+        SQLHandler.addMessage(clientHandler.getNickname(), "null", msg, "once upon a time");
+        //==============//
+
         for (ClientHandler c : clients) {
             c.sendMsg(message);
         }
@@ -52,6 +63,9 @@ public class Server {
         for (ClientHandler c : clients) {
             if (c.getNickname().equals(receiver)) {
                 c.sendMsg(message);
+                //==============//
+                SQLHandler.addMessage(sender.getNickname(), receiver, msg, "once upon a time");
+                //==============//
                 if (!c.equals(sender)) {
                     sender.sendMsg(message);
                 }
